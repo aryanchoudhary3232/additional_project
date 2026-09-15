@@ -1,20 +1,31 @@
 import { NextResponse } from 'next/server';
-import { SLIDES, addSlide, deleteSlide } from '@/lib/mockDb';
+import { ensureDatabaseSeeded } from '@/lib/dbInit';
+import Slide from '@/models/Slide';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const subject = searchParams.get('subject');
+  try {
+    await ensureDatabaseSeeded();
 
-  let filteredSlides = [...SLIDES];
-  if (subject && subject !== 'All') {
-    filteredSlides = filteredSlides.filter(s => s.subject.toLowerCase() === subject.toLowerCase());
+    const { searchParams } = new URL(request.url);
+    const subject = searchParams.get('subject');
+
+    let query = {};
+    if (subject && subject !== 'All') {
+      query.subject = { $regex: new RegExp(`^${subject}$`, 'i') };
+    }
+
+    const slides = await Slide.find(query).sort({ createdAt: -1 });
+    return NextResponse.json({ slides });
+  } catch (error) {
+    console.error('MongoDB Atlas Slides GET Error:', error);
+    return NextResponse.json({ error: 'Failed to fetch slides from database' }, { status: 500 });
   }
-
-  return NextResponse.json({ slides: filteredSlides });
 }
 
 export async function POST(request) {
   try {
+    await ensureDatabaseSeeded();
+
     const body = await request.json();
     const { title, subject, description, teacherName, fileType, fileSize, fileUrl } = body;
 
@@ -22,7 +33,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Title and Subject are required fields' }, { status: 400 });
     }
 
-    const newSlide = {
+    const newSlide = new Slide({
       id: `slide-${Date.now()}`,
       title,
       subject,
@@ -30,21 +41,24 @@ export async function POST(request) {
       uploadDate: new Date().toISOString().split('T')[0],
       fileSize: fileSize || '3.5 MB',
       fileType: fileType || 'pdf',
-      description: description || 'No detailed description provided.',
-      fileUrl: fileUrl || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+      description: description || 'Official course slide deck published to IIIT Sri City portal.',
+      fileUrl: fileUrl || 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf',
       downloads: 0
-    };
+    });
 
-    addSlide(newSlide);
+    await newSlide.save();
 
     return NextResponse.json({ success: true, slide: newSlide }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to upload slide' }, { status: 500 });
+    console.error('MongoDB Atlas Slide POST Error:', error);
+    return NextResponse.json({ error: 'Failed to publish slide to database' }, { status: 500 });
   }
 }
 
 export async function DELETE(request) {
   try {
+    await ensureDatabaseSeeded();
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -52,10 +66,11 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Slide ID is required' }, { status: 400 });
     }
 
-    deleteSlide(id);
+    await Slide.deleteOne({ id });
 
-    return NextResponse.json({ success: true, message: 'Slide deleted successfully' });
+    return NextResponse.json({ success: true, message: 'Slide deleted from MongoDB Atlas database' });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete slide' }, { status: 500 });
+    console.error('MongoDB Atlas Slide DELETE Error:', error);
+    return NextResponse.json({ error: 'Failed to delete slide from database' }, { status: 500 });
   }
 }

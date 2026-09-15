@@ -1,24 +1,35 @@
 import { NextResponse } from 'next/server';
-import { DOUBTS, createDoubt, addDoubtMessage } from '@/lib/mockDb';
+import { ensureDatabaseSeeded } from '@/lib/dbInit';
+import Doubt from '@/models/Doubt';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const studentId = searchParams.get('studentId');
-  const status = searchParams.get('status');
+  try {
+    await ensureDatabaseSeeded();
 
-  let list = [...DOUBTS];
-  if (studentId) {
-    list = list.filter(d => d.studentId === studentId);
-  }
-  if (status && status !== 'All') {
-    list = list.filter(d => d.status.toLowerCase() === status.toLowerCase());
-  }
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get('studentId');
+    const status = searchParams.get('status');
 
-  return NextResponse.json({ doubts: list });
+    let query = {};
+    if (studentId) {
+      query.studentId = studentId;
+    }
+    if (status && status !== 'All') {
+      query.status = { $regex: new RegExp(`^${status}$`, 'i') };
+    }
+
+    const doubts = await Doubt.find(query).sort({ updatedAt: -1 });
+    return NextResponse.json({ doubts });
+  } catch (error) {
+    console.error('MongoDB Atlas Doubts GET Error:', error);
+    return NextResponse.json({ error: 'Failed to fetch doubts from database' }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
   try {
+    await ensureDatabaseSeeded();
+
     const body = await request.json();
     const { studentId, studentName, studentRoll, studentAvatar, subject, title, initialMessage } = body;
 
@@ -29,7 +40,7 @@ export async function POST(request) {
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    const newDoubt = {
+    const newDoubt = new Doubt({
       id: `doubt-${Date.now()}`,
       studentId: studentId || 'u2',
       studentName: studentName || 'Rahul Verma',
@@ -38,7 +49,6 @@ export async function POST(request) {
       subject: subject || 'General',
       title,
       status: 'Pending',
-      createdAt: now.toISOString(),
       messages: [
         {
           senderId: studentId || 'u2',
@@ -48,18 +58,21 @@ export async function POST(request) {
           timestamp: timeStr
         }
       ]
-    };
+    });
 
-    createDoubt(newDoubt);
+    await newDoubt.save();
 
     return NextResponse.json({ success: true, doubt: newDoubt }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create doubt thread' }, { status: 500 });
+    console.error('MongoDB Atlas Doubts POST Error:', error);
+    return NextResponse.json({ error: 'Failed to create doubt thread in database' }, { status: 500 });
   }
 }
 
 export async function PUT(request) {
   try {
+    await ensureDatabaseSeeded();
+
     const body = await request.json();
     const { doubtId, senderId, senderName, role, text, newStatus } = body;
 
@@ -78,7 +91,18 @@ export async function PUT(request) {
       timestamp: timeStr
     };
 
-    const updatedDoubt = addDoubtMessage(doubtId, messageObj, newStatus);
+    const updateFields = {
+      $push: { messages: messageObj }
+    };
+    if (newStatus) {
+      updateFields.status = newStatus;
+    }
+
+    const updatedDoubt = await Doubt.findOneAndUpdate(
+      { id: doubtId },
+      updateFields,
+      { new: true }
+    );
 
     if (!updatedDoubt) {
       return NextResponse.json({ error: 'Doubt thread not found' }, { status: 404 });
@@ -86,6 +110,7 @@ export async function PUT(request) {
 
     return NextResponse.json({ success: true, doubt: updatedDoubt });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to send reply' }, { status: 500 });
+    console.error('MongoDB Atlas Doubts PUT Error:', error);
+    return NextResponse.json({ error: 'Failed to update doubt thread in database' }, { status: 500 });
   }
 }

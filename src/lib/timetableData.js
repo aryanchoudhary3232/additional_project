@@ -1,4 +1,4 @@
-// IIIT Sri City, Chittoor - Monsoon 2026 - UG 2 Timetable Data
+// IIIT Sri City, Chittoor - Monsoon 2026 - Official UG 2 Timetable Data
 
 export const INSTITUTION_INFO = {
   name: "Indian Institute of Information Technology Sri City, Chittoor",
@@ -51,8 +51,8 @@ export const TIMETABLE_DATA = {
     4: { isFree: false, items: [{ course: "OOP1", room: "G04" }, { course: "RANAC4", room: "G06" }, { course: "ADSA3 LAB", room: "103" }] },
     5: { isFree: false, items: [{ course: "OOP4", room: "G08" }, { course: "OOP3", room: "G06" }, { course: "OOP1 Lab", room: "103" }] },
     6: { isFree: false, items: [{ course: "RANAC2", room: "G04" }, { course: "OOP1 Lab", room: "103" }, { course: "ES", room: "G07" }] },
-    7: { isFree: true, note: "UG2 FREE SLOT - Perfect for Doubt Clearing / Extra Sessions!" },
-    8: { isFree: true, note: "UG2 FREE SLOT - Perfect for Doubt Clearing / Extra Sessions!" }
+    7: { isFree: true, note: "IIIT Sri City Approved UG2 Open Slot - Designated for Doubt Resolution" },
+    8: { isFree: true, note: "IIIT Sri City Approved UG2 Open Slot - Designated for Extra Classes" }
   },
   Thursday: {
     1: { isFree: false, items: [{ course: "RANAC1", room: "G09" }, { course: "RANAC4", room: "G06" }, { course: "PC3", room: "B06" }] },
@@ -77,11 +77,11 @@ export const TIMETABLE_DATA = {
   Saturday: {
     1: { isFree: false, items: [{ course: "PC1 Lab", room: "103" }] },
     2: { isFree: false, items: [{ course: "PC1 Lab", room: "103" }] },
-    3: { isFree: true, note: "UG2 FREE SLOT - Perfect for Saturday Doubt Clearing!" },
-    4: { isFree: true, note: "UG2 FREE SLOT - Perfect for Saturday Doubt Clearing!" },
+    3: { isFree: true, note: "IIIT Sri City Approved UG2 Open Window - Saturday Office Hours" },
+    4: { isFree: true, note: "IIIT Sri City Approved UG2 Open Window - Saturday Office Hours" },
     5: { isFree: false, items: [{ course: "PC2 Lab", room: "103" }] },
     6: { isFree: false, items: [{ course: "PC2 Lab", room: "103" }] },
-    7: { isFree: true, note: "UG2 FREE SLOT - Weekend Office Hours!" },
-    8: { isFree: true, note: "UG2 FREE SLOT - Weekend Office Hours!" }
+    7: { isFree: true, note: "IIIT Sri City Approved UG2 Open Window - Remedial Session Slot" },
+    8: { isFree: true, note: "IIIT Sri City Approved UG2 Open Window - Remedial Session Slot" }
   }
 };
